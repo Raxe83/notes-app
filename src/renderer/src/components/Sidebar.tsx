@@ -1,6 +1,5 @@
-import React from 'react'
 import Logo from '../assets/Logo'
-import FolderViewer from './Workspaces'
+import FolderViewer from './FolderViewer'
 import { useEditor } from '@renderer/context/EditorContext'
 
 export default function Sidebar() {

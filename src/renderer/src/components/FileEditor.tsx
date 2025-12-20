@@ -1,4 +1,3 @@
-import React from 'react'
 import { Save } from 'lucide-react'
 import { useFile } from '@renderer/context/FileContext'
 
@@ -17,7 +16,7 @@ export default function FileEditor() {
     <div className="flex-1 flex flex-col">
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-100 dark:bg-gray-800">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-          {currentFile.path.split('/').pop()}
+          {currentFile.path!.split('/').pop()}
           {isDirty && <span className="text-orange-400 ml-2">●</span>}
         </span>
         <button

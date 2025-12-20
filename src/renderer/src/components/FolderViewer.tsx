@@ -7,9 +7,12 @@ import {
   FolderSearch,
   FolderPlus,
   FilePlusIcon,
-  RefreshCcw
+  RefreshCcw,
+  MoreVertical
 } from 'lucide-react'
 import { useFile } from '@renderer/context/FileContext'
+import FileManagerActions from './FileManagerActions'
+import FileContextMenu from './FileContextMenu'
 
 type FileItem = {
   name: string
@@ -22,15 +25,49 @@ export default function FolderViewer() {
   const [selected, setSelected] = React.useState<FileItem | null>(null)
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
   const [fileContents, setFileContents] = React.useState<{ [path: string]: FileItem[] }>({})
+  const [currentFolderPath, setCurrentFolderPath] = React.useState<string>(
+    window.localStorage.getItem('texteditor-lastfolder') || ''
+  )
+  const [contextMenu, setContextMenu] = React.useState<{
+    x: number
+    y: number
+    filePath: string
+    isDirectory: boolean
+  } | null>(null)
+
+  const handleContextMenu = (e: React.MouseEvent, file: FileItem) => {
+    e.preventDefault()
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      filePath: file.path,
+      isDirectory: file.isDirectory
+    })
+  }
+
+  React.useEffect(() => {
+    refreshFolder()
+  }, [])
+
+  const refreshFolder = async () => {
+    const result = await window.electron.refreshFolder(currentFolderPath)
+    setFiles(result?.files || [])
+    setCurrentFolderPath(result?.folderPath || '')
+    setExpanded(new Set())
+    setFileContents({})
+    setSelected(null)
+  }
 
   const { loadFile } = useFile()
 
   const openFolder = async () => {
     const result = await window.electron.openFolder()
-    setFiles(result)
+    window.localStorage.setItem('texteditor-lastfolder', result?.folderPath || '')
+    setFiles(result?.files || [])
     setSelected(null)
     setExpanded(new Set())
     setFileContents({})
+    setCurrentFolderPath(result?.folderPath || '')
   }
 
   const loadDirectory = async (dirPath: string) => {
@@ -77,23 +114,25 @@ export default function FolderViewer() {
       return (
         <div key={file.path}>
           <div
-            onClick={() => onFileClick(file)}
-            className={`flex items-center text-gray-900 gap-1 px-2 py-0.5 cursor-pointer ${
+            onClick={(e) => {
+              onFileClick(file)
+              file.isDirectory && toggleExpand(file, e)
+            }}
+            className={`flex items-center text-gray-900 dark:text-gray-100 gap-1 px-2 py-0.5 cursor-pointer ${
               isSelected
-                ? 'bg-neutral-300 text-black dark:bg-neutral-600 dark:text-white'
+                ? 'bg-neutral-300 text-black dark:bg-neutral-600 dark:text-gray-100'
                 : 'text-gray-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
             }`}
             style={{ paddingLeft: `${level * 16 + 8}px` }}
           >
             {file.isDirectory ? (
-              <button
-                onClick={(e) => toggleExpand(file, e)}
-                className="p-0 w-4 h-4 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-neutral-300 dark:hover:bg-neutral-600 rounded"
-              >
-                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
+              isExpanded ? (
+                <ChevronDown size={14} />
+              ) : (
+                <ChevronRight size={14} />
+              )
             ) : (
-              <span className="w-4" />
+              <div style={{ width: 14, height: 14 }} />
             )}
             {file.isDirectory ? (
               <Folder size={16} className="text-blue-600 dark:text-blue-400" />
@@ -112,24 +151,7 @@ export default function FolderViewer() {
     <div className="w-64 flex flex-col border-r border-gray-200 dark:border-gray-700">
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-end">
-          <button
-            onClick={openFolder}
-            className="px-2 py-2 hover:bg-blue-700/30 rounded-full text-sm font-medium transition-colors"
-          >
-            <RefreshCcw size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
-          <button
-            onClick={openFolder}
-            className="px-2 py-2 hover:bg-blue-700/30 rounded-full text-sm font-medium transition-colors"
-          >
-            <FilePlusIcon size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
-          <button
-            onClick={openFolder}
-            className="px-2 py-2 hover:bg-blue-700/30 rounded-full text-sm font-medium transition-colors"
-          >
-            <FolderPlus size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
+          <FileManagerActions currentPath={currentFolderPath} onRefresh={refreshFolder} />
           <button
             onClick={openFolder}
             className="px-2 py-2 hover:bg-blue-700/30 rounded-full text-sm font-medium transition-colors"

@@ -9,6 +9,7 @@ type EditorContextType = {
   lineCount: number
   charCount: number
   setIsDarkMode: (value: boolean) => void
+  toggleDarkMode: () => void
   increaseFontSize: () => void
   decreaseFontSize: () => void
   toggleFullscreen: () => void
@@ -17,14 +18,17 @@ type EditorContextType = {
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined)
 
-export function EditorProvider({ 
-  children, 
-  content 
-}: { 
+export function EditorProvider({
+  children,
+  content
+}: {
   children: React.ReactNode
-  content: string 
+  content: string
 }) {
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('texteditor-darkmode') === 'true'
+  })
+
   const [fontSize, setFontSize] = useState(16)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -33,12 +37,25 @@ export function EditorProvider({
   const [charCount, setCharCount] = useState(0)
 
   // Load dark mode from localStorage
-  useEffect(() => {
-    const darkMode = localStorage.getItem('texteditor-darkmode')
-    if (darkMode !== null) {
-      setIsDarkMode(darkMode === 'true')
-    }
-  }, [])
+  // useEffect(() => {
+  //   const darkMode = window.localStorage.getItem('texteditor-darkmode')
+  //   console.log('Loaded dark mode from localStorage:', darkMode)
+  //   if (darkMode === 'true') {
+  //     setIsDarkMode(true)
+  //   } else {
+  //     setIsDarkMode(false)
+  //   }
+  // }, [])
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev
+      localStorage.setItem('texteditor-darkmode', next.toString())
+      return next
+    })
+    console.log('Toggled dark mode to', !isDarkMode)
+  }
 
   // Apply dark mode
   useEffect(() => {
@@ -85,6 +102,7 @@ export function EditorProvider({
         lineCount,
         charCount,
         setIsDarkMode,
+        toggleDarkMode,
         increaseFontSize,
         decreaseFontSize,
         toggleFullscreen,

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import TopBar from './components/TopBar'
 import Sidebar from './components/Sidebar'
 import Toolbar from './components/Toolbar'

@@ -1,5 +1,4 @@
 import { useFile } from '@renderer/context/FileContext'
-import React from 'react'
 
 export default function FileBodyViewer() {
   const { currentFile } = useFile()
@@ -16,7 +15,7 @@ export default function FileBodyViewer() {
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
         <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-          {currentFile.path.split('/').pop()}
+          {currentFile.path!.split('/').pop()}
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-neutral-800">

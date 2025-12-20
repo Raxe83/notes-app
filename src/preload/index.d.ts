@@ -6,11 +6,40 @@ export interface IElectronAPI {
   addWorkspaceFolder: () => Promise<any>
   readTree: (path: string) => Promise<any>
   removeFolder: (path: string) => Promise<any>
-  openFolder: () => Promise<FileItem[]>
+  openFolder: () => Promise<{
+    folderPath: string
+    files: {
+      name: string
+      path: string
+      isDirectory: boolean
+    }[]
+  } | null>
   openFile: (path: string) => Promise<string>
   writeFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>
   readFile: (filePath: string) => Promise<{ success: boolean; content?: string; error?: string }>
   readDirectory: (dirPath: string) => Promise<FileItem[]>
+  createFile: (
+    dirPath: string,
+    fileName: string
+  ) => Promise<{ success: boolean; path?: string; error?: string }>
+  createFolder: (
+    dirPath: string,
+    folderName: string
+  ) => Promise<{ success: boolean; path?: string; error?: string }>
+  deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
+  deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+  refreshFolder: (folderPath: string) => Promise<{
+    folderPath: string
+    files: {
+      name: string
+      path: string
+      isDirectory: boolean
+    }[]
+  } | null>
+  renameFile: (
+    oldPath: string,
+    newName: string
+  ) => Promise<{ success: boolean; path?: string; error?: string }>
   onMenuNewFile: (callback: () => void) => void
   onMenuOpenFile: (callback: () => void) => void
   onMenuSaveFile: (callback: () => void) => void

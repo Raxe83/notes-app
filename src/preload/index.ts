@@ -14,7 +14,20 @@ contextBridge.exposeInMainWorld('electron', {
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
   openFile: (path: string) => ipcRenderer.invoke('open-file', path),
-
+   // Create/Delete operations
+  createFile: (dirPath: string, fileName: string) => 
+    ipcRenderer.invoke('create-file', dirPath, fileName),
+  createFolder: (dirPath: string, folderName: string) => 
+    ipcRenderer.invoke('create-folder', dirPath, folderName),
+  deleteFile: (filePath: string) => 
+    ipcRenderer.invoke('delete-file', filePath),
+  deleteFolder: (folderPath: string) => 
+    ipcRenderer.invoke('delete-folder', folderPath),
+  refreshFolder: (folderPath: string) => 
+    ipcRenderer.invoke('refresh-folder', folderPath),
+  renameFile: (oldPath: string, newName: string) => 
+    ipcRenderer.invoke('rename-file', oldPath, newName),
+  
   // Workspace management
   addWorkspaceFolder: () => ipcRenderer.invoke('add-workspace-folder'),
   removeFolder: (path: string) => ipcRenderer.invoke('remove-folder', path),
@@ -28,19 +41,5 @@ contextBridge.exposeInMainWorld('electron', {
   },
   onMenuSaveFile: (callback: () => void) => {
     ipcRenderer.on('menu-save-file', callback)
-  },
-
-  // IPC Renderer (falls direkt benötigt)
-  ipcRenderer: {
-    send: (channel: string, ...args: any[]) => ipcRenderer.send(channel, ...args),
-    on: (channel: string, func: (...args: any[]) => void) => {
-      ipcRenderer.on(channel, (event, ...args) => func(...args))
-    },
-    once: (channel: string, func: (...args: any[]) => void) => {
-      ipcRenderer.once(channel, (event, ...args) => func(...args))
-    },
-    removeListener: (channel: string, func: (...args: any[]) => void) => {
-      ipcRenderer.removeListener(channel, func)
-    }
   }
 })

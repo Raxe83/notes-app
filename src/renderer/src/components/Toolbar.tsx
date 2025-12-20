@@ -1,4 +1,3 @@
-import React from 'react'
 import { FolderOpen, Save, Upload, Moon, Sun, Minus, Plus, Maximize2, Minimize2, ChevronRight } from 'lucide-react'
 import Button from './ui/Button'
 import { Separator } from './ui/Seperator'
@@ -14,6 +13,7 @@ export default function Toolbar() {
     isFullscreen, 
     isSidebarOpen,
     setIsDarkMode, 
+    toggleDarkMode,
     increaseFontSize, 
     decreaseFontSize, 
     toggleFullscreen, 
@@ -24,7 +24,7 @@ export default function Toolbar() {
     if (!window.electron) return
     
     const result = await window.electron.openFolder()
-    if (result && result.length > 0) {
+    if (result && result.files.length > 0) {
       // Wenn ein Ordner geöffnet wurde, wird das von der FolderViewer Komponente behandelt
       console.log('Ordner geöffnet:', result)
     }
@@ -73,7 +73,7 @@ export default function Toolbar() {
 
           <div className="flex items-center gap-2">
             <Sun className="h-4 w-4 text-muted-foreground dark:text-gray-100" />
-            <Switch checked={isDarkMode} onCheckedChange={setIsDarkMode} />
+            <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
             <Moon className="h-4 w-4 text-muted-foreground dark:text-gray-100" />
           </div>
 

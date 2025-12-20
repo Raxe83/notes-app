@@ -1,33 +1,8 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 
 let mainWindow: BrowserWindow | null = null
-
-function readDirRecursive(dir: string) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-  return entries
-    .filter((e) => e.isDirectory() || e.name.endsWith('.txt'))
-    .map((e) => {
-      const fullPath = path.join(dir, e.name)
-
-      if (e.isDirectory()) {
-        return {
-          type: 'folder',
-          name: e.name,
-          path: fullPath,
-          children: readDirRecursive(fullPath)
-        }
-      }
-
-      return {
-        type: 'file',
-        name: e.name,
-        path: fullPath
-      }
-    })
-}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -143,16 +118,37 @@ ipcMain.handle('open-folder', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory']
   })
+
   if (result.canceled || result.filePaths.length === 0) {
-    return []
+    return null
   }
+
   const folderPath = result.filePaths[0]
+
   const files = fs.readdirSync(folderPath).map((file) => ({
     name: file,
     path: path.join(folderPath, file),
     isDirectory: fs.statSync(path.join(folderPath, file)).isDirectory()
   }))
-  return files
+
+  return {
+    folderPath,
+    files
+  }
+})
+
+ipcMain.handle('refresh-folder', async (event, folderPath: string) => {
+  try {
+    const files = fs.readdirSync(folderPath).map((file) => ({
+      name: file,
+      path: path.join(folderPath, file),
+      isDirectory: fs.statSync(path.join(folderPath, file)).isDirectory()
+    }))
+    return { folderPath, files }
+  } catch (error) {
+    console.error('Error reading directory:', error)
+    return []
+  }
 })
 
 // Unterordner lesen (für expandierbare Ordnerstruktur)
@@ -235,9 +231,93 @@ ipcMain.handle('open-file', async (event, filePath: string) => {
     return ''
   }
 })
+// Neue Datei erstellen
+ipcMain.handle('create-file', async (event, dirPath: string, fileName: string) => {
+  try {
+    const filePath = path.join(dirPath, fileName)
+
+    // Prüfen ob Datei bereits existiert
+    if (fs.existsSync(filePath)) {
+      return { success: false, error: 'Datei existiert bereits' }
+    }
+
+    // Leere Datei erstellen
+    fs.writeFileSync(filePath, '', 'utf-8')
+    return { success: true, path: filePath }
+  } catch (error: any) {
+    console.error('Error creating file:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Neuen Ordner erstellen
+ipcMain.handle('create-folder', async (event, dirPath: string, folderName: string) => {
+  try {
+    const folderPath = path.join(dirPath, folderName)
+
+    // Prüfen ob Ordner bereits existiert
+    if (fs.existsSync(folderPath)) {
+      return { success: false, error: 'Ordner existiert bereits' }
+    }
+
+    // Ordner erstellen
+    fs.mkdirSync(folderPath, { recursive: true })
+    return { success: true, path: folderPath }
+  } catch (error: any) {
+    console.error('Error creating folder:', error)
+    return { success: false, error: error.message }
+  }
+})
+// Datei löschen
+ipcMain.handle('delete-file', async (event, filePath: string) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: 'Datei existiert nicht' }
+    }
+
+    fs.unlinkSync(filePath)
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting file:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Ordner löschen (rekursiv)
+ipcMain.handle('delete-folder', async (event, folderPath: string) => {
+  try {
+    if (!fs.existsSync(folderPath)) {
+      return { success: false, error: 'Ordner existiert nicht' }
+    }
+
+    // Rekursiv löschen
+    fs.rmSync(folderPath, { recursive: true, force: true })
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting folder:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Datei/Ordner umbenennen
+ipcMain.handle('rename-file', async (event, oldPath: string, newName: string) => {
+  try {
+    const dir = path.dirname(oldPath)
+    const newPath = path.join(dir, newName)
+
+    if (fs.existsSync(newPath)) {
+      return { success: false, error: 'Eine Datei/Ordner mit diesem Namen existiert bereits' }
+    }
+
+    fs.renameSync(oldPath, newPath)
+    return { success: true, path: newPath }
+  } catch (error: any) {
+    console.error('Error renaming:', error)
+    return { success: false, error: error.message }
+  }
+})
 
 // ==================== WORKSPACE MANAGEMENT ====================
-
 // Workspace-Ordner hinzufügen
 ipcMain.handle('add-workspace-folder', async () => {
   const result = await dialog.showOpenDialog({
@@ -272,18 +352,4 @@ app.on('activate', () => {
   if (mainWindow === null) {
     createWindow()
   }
-})
-
-ipcMain.on('window:minimize', () => {
-  BrowserWindow.getFocusedWindow()?.minimize()
-})
-
-ipcMain.on('window:maximize', () => {
-  const win = BrowserWindow.getFocusedWindow()
-  if (!win) return
-  win.isMaximized() ? win.unmaximize() : win.maximize()
-})
-
-ipcMain.on('window:close', () => {
-  BrowserWindow.getFocusedWindow()?.close()
 })

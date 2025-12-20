@@ -1,10 +1,19 @@
 import Logo from '@renderer/assets/Logo'
-import React from 'react'
+import { useEditor } from '@renderer/context/EditorContext'
 
 export default function TopBar() {
+  const { isFullscreen } = useEditor()
+
+  if (isFullscreen) {
+    return null
+  }
+
   return (
     <div className="relative h-8 bg-zinc-200/50 dark:bg-zinc-900 rounded-t-xl flex items-center justify-end px-2 text-white">
-      <div className="absolute inset-0 mr-28" style={{ WebkitAppRegion: 'drag' }} />
+      <div
+        className="absolute inset-0 mr-28"
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      />
       <div className="p-4 dark:border-neutral-700 flex-1">
         <div className="flex items-center gap-2">
           {/* Logo mit Farbe */}
