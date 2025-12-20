@@ -1,0 +1,53 @@
+'use client'
+
+import React, { useEffect } from 'react'
+import TopBar from './components/TopBar'
+import Sidebar from './components/Sidebar'
+import Toolbar from './components/Toolbar'
+import FileInfoBar from './components/FileInfoBar'
+import EditorArea from './components/EditorArea'
+import { EditorProvider } from '@renderer/context/EditorContext'
+import { FileProvider, useFile } from '@renderer/context/FileContext'
+
+function AppContent() {
+  const { newFile, saveFile, content, isDirty, currentFile } = useFile()
+
+  // Setup Electron menu listeners
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electron) {
+      window.electron.onMenuNewFile(() => newFile())
+      window.electron.onMenuOpenFile(async () => {
+        const result = await window.electron.openFolder()
+        if (result) {
+          // Handled by FolderViewer component
+        }
+      })
+      window.electron.onMenuSaveFile(() => saveFile())
+    }
+  }, [content, currentFile, isDirty])
+
+  return (
+    <EditorProvider content={content}>
+      <div className="flex flex-col h-screen w-screen">
+        <TopBar />
+        <div className="flex h-screen bg-background text-foreground overflow-hidden">
+          <Sidebar />
+          
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <Toolbar />
+            <FileInfoBar />
+            <EditorArea />
+          </div>
+        </div>
+      </div>
+    </EditorProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <FileProvider>
+      <AppContent />
+    </FileProvider>
+  )
+}
