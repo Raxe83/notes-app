@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { FilePlus, FolderPlus, RefreshCcw } from 'lucide-react'
+import { useFile } from '@renderer/context/FileContext'
+import { FileItem } from './FolderViewer'
 
 interface FileManagerActionsProps {
   currentPath: string
   onRefresh: () => void
+  setSelected: React.Dispatch<React.SetStateAction<FileItem | null>>
 }
 
-export default function FileManagerActions({ currentPath, onRefresh }: FileManagerActionsProps) {
+export default function FileManagerActions({
+  currentPath,
+  onRefresh,
+  setSelected
+}: FileManagerActionsProps) {
   const [showNewFileDialog, setShowNewFileDialog] = useState(false)
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [newFolderName, setNewFolderName] = useState('')
+  const { loadFile } = useFile()
 
   const handleCreateFile = async () => {
     if (!newFileName.trim() || !window.electron) return
@@ -21,6 +29,13 @@ export default function FileManagerActions({ currentPath, onRefresh }: FileManag
       setNewFileName('')
       setShowNewFileDialog(false)
       onRefresh()
+      loadFile(result.path!)
+      setSelected({
+        path: result.path!,
+        name: result.path!.split('\\').pop()?.split('.')[0] || '',
+        isDirectory: false
+      } as FileItem)
+      console.log(result.path!.split('\\').pop()?.split('.')[0] || '')
     } else {
       alert('Fehler: ' + result.error)
     }

@@ -28,6 +28,8 @@ export interface IElectronAPI {
   ) => Promise<{ success: boolean; path?: string; error?: string }>
   deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
   deleteFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
+  moveFile: (source: string, target: string) => Promise<any>
+  pathExists: (p: string) => Promise<any>
   refreshFolder: (folderPath: string) => Promise<{
     folderPath: string
     files: {
@@ -43,6 +45,10 @@ export interface IElectronAPI {
   onMenuNewFile: (callback: () => void) => void
   onMenuOpenFile: (callback: () => void) => void
   onMenuSaveFile: (callback: () => void) => void
+  showContextMenu: (file: any) => void
+  onContextOpen: (cb: (file: any) => void) => void
+  onContextRename: (cb: (file: any) => void) => void
+  onContextDelete: (cb: (file: any) => void) => void
 }
 
 export type FileItem = {

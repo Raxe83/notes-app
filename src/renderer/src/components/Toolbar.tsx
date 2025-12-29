@@ -1,4 +1,19 @@
-import { FolderOpen, Save, Upload, Moon, Sun, Minus, Plus, Maximize2, Minimize2, ChevronRight } from 'lucide-react'
+import {
+  Save,
+  Moon,
+  Sun,
+  Minus,
+  Plus,
+  Maximize2,
+  Minimize2,
+  ChevronRight,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Highlighter
+} from 'lucide-react'
 import Button from './ui/Button'
 import { Separator } from './ui/Seperator'
 import { Switch } from './ui/Switch'
@@ -7,22 +22,21 @@ import { useFile } from '@renderer/context/FileContext'
 
 export default function Toolbar() {
   const { saveFile, newFile } = useFile()
-  const { 
-    isDarkMode, 
-    fontSize, 
-    isFullscreen, 
+  const {
+    isDarkMode,
+    fontSize,
+    isFullscreen,
     isSidebarOpen,
-    setIsDarkMode, 
     toggleDarkMode,
-    increaseFontSize, 
-    decreaseFontSize, 
-    toggleFullscreen, 
-    toggleSidebar 
+    increaseFontSize,
+    decreaseFontSize,
+    toggleFullscreen,
+    toggleSidebar
   } = useEditor()
 
   const handleElectronOpen = async () => {
     if (!window.electron) return
-    
+
     const result = await window.electron.openFolder()
     if (result && result.files.length > 0) {
       // Wenn ein Ordner geöffnet wurde, wird das von der FolderViewer Komponente behandelt
@@ -39,20 +53,28 @@ export default function Toolbar() {
               className={`h-4 w-4 transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`}
             />
           </Button>
-
-          <Button variant="ghost" size="sm" onClick={newFile}>
-            <Upload className="h-4 w-4 mr-2" />
-            New File
+          <Button variant="ghost" size="icon" onClick={saveFile}>
+            <Save className="h-4 w-4" />
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={handleElectronOpen}>
-            <FolderOpen className="h-4 w-4 mr-2" />
-            Open
+          <Button variant="ghost" size="icon" onClick={newFile}>
+            <Bold className="h-4 w-4" />
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={saveFile}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
+          <Button variant="ghost" size="icon" onClick={handleElectronOpen}>
+            <Italic className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleElectronOpen}>
+            <Underline className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleElectronOpen}>
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleElectronOpen}>
+            <ListOrdered className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleElectronOpen}>
+            <Highlighter className="h-4 w-4" />
           </Button>
         </div>
 

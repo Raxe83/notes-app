@@ -1,12 +1,12 @@
 import { Trash2, Edit2 } from 'lucide-react'
 
-interface FileContextMenuProps {
+export interface FileContextMenuProps {
   x: number
   y: number
   filePath: string
   isDirectory: boolean
-  onClose: () => void
-  onRefresh: () => void
+  onClose?: () => void
+  onRefresh?: () => void
 }
 
 export default function FileContextMenu({
@@ -21,10 +21,10 @@ export default function FileContextMenu({
     if (!window.electron) return
 
     const confirmed = confirm(
-      `Möchten Sie ${isDirectory ? 'den Ordner' : 'die Datei'} wirklich löschen?`
+      `Möchten Sie ${isDirectory ? 'den Ordner' : 'die Datei'} ${filePath.split('\\').pop()} wirklich löschen?`
     )
     if (!confirmed) {
-      onClose()
+      onClose!()
       return
     }
 
@@ -33,12 +33,11 @@ export default function FileContextMenu({
       : await window.electron.deleteFile(filePath)
 
     if (result.success) {
-      alert('Erfolgreich gelöscht')
-      onRefresh()
+      onRefresh!()
     } else {
       alert('Fehler beim Löschen: ' + result.error)
     }
-    onClose()
+    onClose!()
   }
 
   const handleRename = async () => {
@@ -46,27 +45,23 @@ export default function FileContextMenu({
     const newName = prompt('Neuer Name:', currentName)
 
     if (!newName || newName === currentName || !window.electron) {
-      onClose()
+      onClose!()
       return
     }
 
     const result = await window.electron.renameFile(filePath, newName)
     if (result.success) {
-      alert('Erfolgreich umbenannt')
-      onRefresh()
+      onRefresh!()
     } else {
       alert('Fehler beim Umbenennen: ' + result.error)
     }
-    onClose()
+    onClose!()
   }
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
       {/* Context Menu */}
       <div

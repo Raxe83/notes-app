@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import * as path from 'path'
-import * as fs from 'fs'
+// import * as fs from 'fs'
+import { mkdir, rename } from 'fs/promises'
+import * as fsExtra from 'fs-extra'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -125,10 +127,10 @@ ipcMain.handle('open-folder', async () => {
 
   const folderPath = result.filePaths[0]
 
-  const files = fs.readdirSync(folderPath).map((file) => ({
+  const files = fsExtra.readdirSync(folderPath).map((file) => ({
     name: file,
     path: path.join(folderPath, file),
-    isDirectory: fs.statSync(path.join(folderPath, file)).isDirectory()
+    isDirectory: fsExtra.statSync(path.join(folderPath, file)).isDirectory()
   }))
 
   return {
@@ -136,13 +138,13 @@ ipcMain.handle('open-folder', async () => {
     files
   }
 })
-
+// Ordner aktualisieren
 ipcMain.handle('refresh-folder', async (event, folderPath: string) => {
   try {
-    const files = fs.readdirSync(folderPath).map((file) => ({
+    const files = fsExtra.readdirSync(folderPath).map((file) => ({
       name: file,
       path: path.join(folderPath, file),
-      isDirectory: fs.statSync(path.join(folderPath, file)).isDirectory()
+      isDirectory: fsExtra.statSync(path.join(folderPath, file)).isDirectory()
     }))
     return { folderPath, files }
   } catch (error) {
@@ -154,9 +156,9 @@ ipcMain.handle('refresh-folder', async (event, folderPath: string) => {
 // Unterordner lesen (für expandierbare Ordnerstruktur)
 ipcMain.handle('read-directory', async (event, dirPath: string) => {
   try {
-    const files = fs.readdirSync(dirPath).map((file) => {
+    const files = fsExtra.readdirSync(dirPath).map((file) => {
       const fullPath = path.join(dirPath, file)
-      const stats = fs.statSync(fullPath)
+      const stats = fsExtra.statSync(fullPath)
       return {
         name: file,
         path: fullPath,
@@ -174,12 +176,12 @@ ipcMain.handle('read-directory', async (event, dirPath: string) => {
 ipcMain.handle('read-tree', async (event, dirPath: string) => {
   try {
     const readDirRecursive = (dir: string): any[] => {
-      const items = fs.readdirSync(dir)
+      const items = fsExtra.readdirSync(dir)
       const result: any[] = []
 
       items.forEach((item) => {
         const fullPath = path.join(dir, item)
-        const stats = fs.statSync(fullPath)
+        const stats = fsExtra.statSync(fullPath)
 
         const fileItem = {
           name: item,
@@ -203,7 +205,7 @@ ipcMain.handle('read-tree', async (event, dirPath: string) => {
 // Textdatei lesen
 ipcMain.handle('read-file', async (event, filePath: string) => {
   try {
-    const content = fs.readFileSync(filePath, 'utf-8')
+    const content = fsExtra.readFileSync(filePath, 'utf-8')
     return { success: true, content }
   } catch (error: any) {
     console.error('Error reading file:', error)
@@ -214,7 +216,7 @@ ipcMain.handle('read-file', async (event, filePath: string) => {
 // Textdatei schreiben
 ipcMain.handle('write-file', async (event, filePath: string, content: string) => {
   try {
-    fs.writeFileSync(filePath, content, 'utf-8')
+    fsExtra.writeFileSync(filePath, content, 'utf-8')
     return { success: true }
   } catch (error: any) {
     console.error('Error writing file:', error)
@@ -237,12 +239,12 @@ ipcMain.handle('create-file', async (event, dirPath: string, fileName: string) =
     const filePath = path.join(dirPath, fileName)
 
     // Prüfen ob Datei bereits existiert
-    if (fs.existsSync(filePath)) {
+    if (fsExtra.existsSync(filePath)) {
       return { success: false, error: 'Datei existiert bereits' }
     }
 
     // Leere Datei erstellen
-    fs.writeFileSync(filePath, '', 'utf-8')
+    fsExtra.writeFileSync(filePath, '', 'utf-8')
     return { success: true, path: filePath }
   } catch (error: any) {
     console.error('Error creating file:', error)
@@ -256,12 +258,12 @@ ipcMain.handle('create-folder', async (event, dirPath: string, folderName: strin
     const folderPath = path.join(dirPath, folderName)
 
     // Prüfen ob Ordner bereits existiert
-    if (fs.existsSync(folderPath)) {
+    if (fsExtra.existsSync(folderPath)) {
       return { success: false, error: 'Ordner existiert bereits' }
     }
 
     // Ordner erstellen
-    fs.mkdirSync(folderPath, { recursive: true })
+    fsExtra.mkdirSync(folderPath, { recursive: true })
     return { success: true, path: folderPath }
   } catch (error: any) {
     console.error('Error creating folder:', error)
@@ -271,11 +273,16 @@ ipcMain.handle('create-folder', async (event, dirPath: string, folderName: strin
 // Datei löschen
 ipcMain.handle('delete-file', async (event, filePath: string) => {
   try {
-    if (!fs.existsSync(filePath)) {
+    if (!fsExtra.existsSync(filePath)) {
       return { success: false, error: 'Datei existiert nicht' }
     }
 
-    fs.unlinkSync(filePath)
+    // Prüfen ob Datei ein Ordner ist
+    if (fsExtra.statSync(filePath).isDirectory()) {
+      return { success: false, error: 'Datei ist ein Ordner' }
+    }
+
+    fsExtra.unlinkSync(filePath)
     return { success: true }
   } catch (error: any) {
     console.error('Error deleting file:', error)
@@ -286,16 +293,54 @@ ipcMain.handle('delete-file', async (event, filePath: string) => {
 // Ordner löschen (rekursiv)
 ipcMain.handle('delete-folder', async (event, folderPath: string) => {
   try {
-    if (!fs.existsSync(folderPath)) {
+    if (!fsExtra.existsSync(folderPath)) {
       return { success: false, error: 'Ordner existiert nicht' }
     }
 
     // Rekursiv löschen
-    fs.rmSync(folderPath, { recursive: true, force: true })
+    fsExtra.rmSync(folderPath, { recursive: true, force: true })
     return { success: true }
   } catch (error: any) {
     console.error('Error deleting folder:', error)
     return { success: false, error: error.message }
+  }
+})
+
+// Datei/Ordner verschieben / umbenennen
+ipcMain.handle('file-move', async (_e, sourcePath: string, targetDir: string) => {
+  try {
+    const fileName = path.basename(sourcePath)
+    const targetPath = path.join(targetDir, fileName)
+
+    if (sourcePath === targetPath) {
+      return { success: false, error: 'Source and target are identical' }
+    }
+
+    await mkdir(targetDir, { recursive: true })
+
+    try {
+      await rename(sourcePath, targetPath)
+    } catch (err: any) {
+      if (err.code === 'EXDEV' || err.code === 'EPERM') {
+        await fsExtra.move(sourcePath, targetPath, { overwrite: true })
+      } else {
+        throw err
+      }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('Error moving file:', err)
+    return { success: false, error: String(err) }
+  }
+})
+// Prüfen ob Pfad existiert
+ipcMain.handle('path-exists', async (_e, targetPath: string) => {
+  try {
+    await fsExtra.accessSync(targetPath)
+    return true
+  } catch {
+    return false
   }
 })
 
@@ -305,11 +350,11 @@ ipcMain.handle('rename-file', async (event, oldPath: string, newName: string) =>
     const dir = path.dirname(oldPath)
     const newPath = path.join(dir, newName)
 
-    if (fs.existsSync(newPath)) {
+    if (fsExtra.existsSync(newPath)) {
       return { success: false, error: 'Eine Datei/Ordner mit diesem Namen existiert bereits' }
     }
 
-    fs.renameSync(oldPath, newPath)
+    fsExtra.renameSync(oldPath, newPath)
     return { success: true, path: newPath }
   } catch (error: any) {
     console.error('Error renaming:', error)
