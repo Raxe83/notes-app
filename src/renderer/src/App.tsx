@@ -3,14 +3,24 @@
 import { useEffect } from 'react'
 import TopBar from './components/TopBar'
 import Sidebar from './components/Sidebar'
-import Toolbar from './components/Toolbar'
-import FileInfoBar from './components/FileInfoBar'
 import EditorArea from './components/EditorArea'
 import { EditorProvider } from '@renderer/context/EditorContext'
 import { FileProvider, useFile } from '@renderer/context/FileContext'
 
 function AppContent() {
   const { newFile, saveFile, content, isDirty, currentFile } = useFile()
+
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if ((e.ctrlKey) && e.key.toLowerCase() === 's') {
+  //       e.preventDefault()
+  //       saveFile()
+  //     }
+  //   }
+
+  //   window.addEventListener('keydown', handleKeyDown)
+  //   return () => window.removeEventListener('keydown', handleKeyDown)
+  // }, [])
 
   // Setup Electron menu listeners
   useEffect(() => {
@@ -32,10 +42,8 @@ function AppContent() {
         <TopBar />
         <div className="flex h-screen bg-background text-foreground overflow-hidden">
           <Sidebar />
-          
+
           <div className="flex flex-col flex-1 overflow-hidden">
-            <Toolbar />
-            <FileInfoBar />
             <EditorArea />
           </div>
         </div>

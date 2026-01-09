@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, globalShortcut } from 'electron'
 import * as path from 'path'
 // import * as fs from 'fs'
 import { mkdir, rename } from 'fs/promises'
@@ -397,4 +397,8 @@ app.on('activate', () => {
   if (mainWindow === null) {
     createWindow()
   }
+})
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
 })

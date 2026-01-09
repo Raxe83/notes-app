@@ -66,17 +66,17 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
   const saveFile = async () => {
     if (!window.electron) return
 
-    if (!currentFile?.path) {
-      alert('Keine Datei zum Speichern ausgewählt')
-      return
-    }
+    // if (!currentFile?.path) {
+    //   alert('Keine Datei zum Speichern ausgewählt')
+    //   return
+    // }
 
-    const result = await window.electron.writeFile(currentFile.path, content)
+    const result = await window.electron.writeFile(currentFile!.path!, content)
     if (result.success) {
       const savedFile: FileItem = {
         id: currentFile?.id || Date.now().toString(),
-        name: currentFile.name,
-        path: currentFile.path,
+        name: currentFile!.name,
+        path: currentFile!.path,
         content,
         modified: new Date()
       }

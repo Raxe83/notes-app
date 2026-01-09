@@ -1,4 +1,4 @@
-import { Trash2, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, Pin } from 'lucide-react'
 
 export interface FileContextMenuProps {
   x: number
@@ -61,7 +61,7 @@ export default function FileContextMenu({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={onClose} />
 
       {/* Context Menu */}
       <div
@@ -75,6 +75,16 @@ export default function FileContextMenu({
           <Edit2 size={14} />
           Umbenennen
         </button>
+        {!isDirectory && (
+          <button
+          // handlePin function fehlt noch
+            // onClick={handleRename}
+            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-gray-100"
+          >
+            <Pin size={14} />
+            Pin to Desktop
+          </button>
+        )}
         <button
           onClick={handleDelete}
           className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400"

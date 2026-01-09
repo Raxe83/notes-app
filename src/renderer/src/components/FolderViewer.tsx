@@ -1,8 +1,8 @@
 import React from 'react'
-import { ChevronRight, ChevronDown, Folder, File, FolderSearch } from 'lucide-react'
+import { ChevronRight, ChevronDown, Folder, File, FolderSearch, FolderOpen } from 'lucide-react'
 import { useFile } from '@renderer/context/FileContext'
 import FileManagerActions from './FileManagerActions'
-// import FileContextMenu, { FileContextMenuProps } from './FileContextMenu'
+import FileContextMenu, { FileContextMenuProps } from './FileContextMenu'
 
 export type FileItem = {
   name: string
@@ -30,7 +30,7 @@ export default function FolderViewer() {
   const [draggedFile, setDraggedFile] = React.useState<FileItem | null>(null)
   const [hoveredDropTarget, setHoveredDropTarget] = React.useState<string | null>(null)
 
-  // const [contextMenu, setContextMenu] = React.useState<FileContextMenuProps | null>(null)
+  const [contextMenu, setContextMenu] = React.useState<FileContextMenuProps | null>(null)
 
   const parentFolder = currentFolderPath
     ? currentFolderPath.substring(currentFolderPath.lastIndexOf('\\') + 1)
@@ -157,6 +157,16 @@ export default function FolderViewer() {
             setHoveredDropTarget(null)
           }}
         >
+          {contextMenu && contextMenu.x !== undefined && contextMenu.y !== undefined && (
+            <FileContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              filePath={file.path}
+              isDirectory={file.isDirectory}
+              onClose={() => setContextMenu(null)}
+              onRefresh={refreshFolder}
+            />
+          )}
           {/* ORDNER DROPZONE - nur visuell */}
           {file.isDirectory && draggedFile && isHovered && (
             <div className="absolute inset-0 rounded z-30 bg-blue-500/20 pointer-events-none" />
@@ -171,6 +181,17 @@ export default function FolderViewer() {
             onClick={(e) => {
               onFileClick(file)
               file.isDirectory && toggleExpand(file, e)
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault
+              setContextMenu({
+                x: e.clientX,
+                y: e.clientY,
+                filePath: file.path,
+                isDirectory: file.isDirectory,
+                onClose: () => setContextMenu(null),
+                onRefresh: refreshFolder
+              })
             }}
             className={`relative z-20 flex items-center gap-1 px-2 py-0.5 cursor-pointer select-none hover:bg-neutral-200 dark:hover:bg-neutral-700 ${
               selected?.path === file.path
@@ -207,23 +228,16 @@ export default function FolderViewer() {
     <div className="w-64 flex flex-col border-r border-gray-200 dark:border-gray-700">
       {/* Header */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-end items-center">
-        <h2 className="mt-1 mr-2 font-semibold text-gray-700 dark:text-gray-200">{parentFolder}</h2>
         <FileManagerActions
           currentPath={currentFolderPath}
           onRefresh={refreshFolder}
           setSelected={setSelected}
         />
-        <button
-          onClick={openFolder}
-          className="px-2 py-2 hover:bg-blue-700/30 rounded-full text-sm font-medium transition-colors"
-        >
-          <FolderSearch size={20} className="text-gray-600 dark:text-gray-400" />
-        </button>
       </div>
 
       {/* Root Dropzone + File Tree */}
       <div
-        className="relative flex-1 overflow-y-auto max-h-[calc(100vh-13rem)] border-b border-gray-200 dark:border-gray-700"
+        className="relative flex-1 overflow-y-auto max-h-[calc(100vh-16rem)] border-b border-gray-200 dark:border-gray-700"
         onDragOver={(e) => {
           e.preventDefault()
         }}
@@ -256,8 +270,31 @@ export default function FolderViewer() {
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-            Kein Ordner geöffnet
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 text-sm gap-1 p-4 ">
+            <FolderSearch size={42} className="mr-2 text-gray-600 dark:text-gray-400" />
+            <p className="text-normal font-bold text-center text-gray-600 dark:text-gray-400">
+              {' '}
+              Kein Ordner geöffnet
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+              Öffne einen Ordner in welchem deine Datein gespeichert werden sollen
+            </p>
+            <button
+              onClick={openFolder}
+              className="mt-2 px-4 py-2 flex flex-row items-center hover:bg-blue-800/50 text-white rounded-md text-sm font-medium transition-colors"
+            >
+              <Folder size={16} className="mr-2" />
+              Ordner öffnen
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="p-2 flex flex-col">
+        {/* <p className="text-sm text-gray-700/50 dark:text-gray-400/50">selected folder: </p> */}
+        {parentFolder && (
+          <div className="flex flex-row items-center gap-2">
+            <FolderOpen size={14} className="text-gray-700/50 dark:text-gray-400/50" />
+            <h2 className="text-sm text-gray-700/50 dark:text-gray-400/50">{parentFolder}</h2>
           </div>
         )}
       </div>

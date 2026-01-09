@@ -1,4 +1,3 @@
-import React from 'react'
 import { useEditor } from '@renderer/context/EditorContext'
 import { useFile } from '@renderer/context/FileContext'
 
